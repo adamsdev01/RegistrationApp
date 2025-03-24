@@ -69,6 +69,11 @@ namespace RegistrationApp.Models
         [Display(Name = "Email")]
         public string Email { get; set; }
 
+        [DataType(DataType.Password)]
+        [Display(Name = "Confirm Email")]
+        [Compare("Email", ErrorMessage = "The email and confirmation email do not match.")]
+        public string EmailConfirmed { get; set; }
+
         [Required]
         [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 6)]
         [DataType(DataType.Password)]
@@ -79,6 +84,9 @@ namespace RegistrationApp.Models
         [Display(Name = "Confirm password")]
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; }
+
+        // other properties I want to save to the registration application
+        // like name/demographics/identification
     }
 
     public class ResetPasswordViewModel
@@ -108,5 +116,15 @@ namespace RegistrationApp.Models
         [EmailAddress]
         [Display(Name = "Email")]
         public string Email { get; set; }
+    }
+
+    public class EnterRegistrationCodeViewModel
+    {
+        [Required]
+        public string Email { get; set; }
+
+        [Required]
+        [Display(Name = "Enter Code")]
+        public string VerificationCode { get; set; }    
     }
 }

@@ -26,5 +26,15 @@ namespace RegistrationApp.Controllers
 
             return View();
         }
+
+        /// <summary>
+        /// Enter Verification Code sent to email
+        /// </summary>
+        /// <returns></returns>
+        public ActionResult EnterRegistrationCode(string email)
+        {
+            ViewBag.Email = email;
+            return View();
+        }
     }
 }

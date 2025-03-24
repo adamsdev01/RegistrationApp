@@ -1,9 +1,41 @@
-﻿@{
-    ViewBag.Title = "About";
-}
-<main aria-labelledby="title">
-    <h2 id="title">@ViewBag.Title.</h2>
-    <h3>@ViewBag.Message</h3>
+﻿
 
-    <p>Use this area to provide additional information.</p>
-</main>
+@{
+    ViewBag.Title = "Search";
+}
+
+<h2>Online Tutorial</h2>
+<hr />
+<form id="multiStepForm">
+    <!-- Step 1: Search -->
+    <div class="tab">
+        <h3>Search</h3>
+        <label for="firstName">First Name:</label>
+        <input type="text" id="firstName" name="firstName"><br><br>
+
+        <label for="lastName">Last Name:</label>
+        <input type="text" id="lastName" name="lastName"><br><br>
+
+        <label for="accountNumber">Account Number:</label>
+        <input type="text" id="accountNumber" name="accountNumber"><br><br>
+        <button type="button" id="nextBtn">Next</button>
+    </div>
+
+    <!-- Step 2: Results -->
+    <div class="tab">
+        <h3>Search Results</h3>
+        <div id="searchResults">
+        </div>
+        <div id="ajaxError">
+        </div>
+        <div style="overflow:auto;">
+            <div style="float:right;">
+                <button type="button" id="prevBtn">Previous</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add more steps (tabs) here if needed -->
+</form>
+
+<script src="~/Scripts/searchWizard.js"></script>

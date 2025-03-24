@@ -1,0 +1,102 @@
+﻿@model RegistrationApp.Models.EnterRegistrationCodeViewModel
+
+@{
+    ViewBag.Title = "OTP";
+}
+
+<style>
+    .otp-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .otp-input {
+        width: 40px;
+        border: none;
+        border-bottom: 3px solid rgba(0,0,0,0.5);
+        margin: 0 10px;
+        text-align: center;
+        font-size: 36px;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .otp-input:focus {
+        border-bottom: 3px solid green;
+        outline: none;
+    }
+
+    .otp-input:nth-child(1) {
+        cursor: pointer;
+        pointer-events: all;
+    }
+
+</style>
+<br />
+<br />
+<h4>Please check your email (<b>@ViewBag.Email</b>) for the one-time registration code.</h4>
+<br />
+@using (Html.BeginForm("SubmitRegistrationCode", "Account", FormMethod.Post, new { @class = "form-horizontal", role = "form", id="otp-form" }))
+{
+    <div class="otp-container">
+        @Html.AntiForgeryToken()
+        @Html.ValidationSummary("", new { @class = "text-danger" })
+        @Html.HiddenFor(m => m.Email)
+
+        @Html.LabelFor(m => m.VerificationCode)
+        <div id="inputs" class="inputs">
+            <input class="otp-input" type="text" maxlength="1" data-index="0" />
+            <input class="otp-input" type="text" maxlength="1" data-index="1" />
+            <input class="otp-input" type="text" maxlength="1" data-index="2" />
+            <input class="otp-input" type="text" maxlength="1" data-index="3" />
+            <input class="otp-input" type="text" maxlength="1" data-index="4" />
+            <input class="otp-input" type="text" maxlength="1" data-index="5" />
+        </div>
+        @Html.HiddenFor(m => m.VerificationCode)
+        <div class="form-group">
+            <button id="verify-button" type="submit" class="btn btn-primary">SUBMIT</button>
+        </div>
+    </div>
+}
+<script>
+    const otpInputs = document.querySelectorAll('otp-input');
+    const otpCodeHidden = document.getElementById('VerificationCode');
+
+    function getOTPString() {
+        let otpString = '';
+        otpInputs.forEach(input => {
+            otpString += input.value;
+        });
+        return otpString;
+    }
+
+    function handleInput(event) {
+        const currentInput = event.target;
+        const currentIndex = parseInt(currentInput.getAttribute('data-index'));
+        const nextIndex = currentIndex + 1;
+
+        if (currentIndex.value.length === 1 && nextIndex < otpInputs.length) {
+            otpInputs[nextIndex].focus();
+        }
+    }
+
+    otpInputs.forEach(input => {
+        input.addEventListener('input', handleInput);
+        input.addEventListener('input', () => {
+            const otp = getOTPString()
+            otpCodeHidden.value = otp
+        });
+    });
+
+    const form = document.getElementById('otp-form')
+    form.addEventListener('submit', (event) => {
+        const otp = getOTPString();
+        if (otp.length !== otpInputs.length) {
+            event.preventDefault();
+            alert("Fill in every digit");
+        }
+    })
+
+
+</script>

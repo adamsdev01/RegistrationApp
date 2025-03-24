@@ -5,10 +5,12 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
+using System.Web.UI.WebControls;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
 using RegistrationApp.Models;
+using RegistrationApp.Services;
 
 namespace RegistrationApp.Controllers
 {
@@ -17,6 +19,7 @@ namespace RegistrationApp.Controllers
     {
         private ApplicationSignInManager _signInManager;
         private ApplicationUserManager _userManager;
+        private UserRegistrationDBEntities _userRegistrationDB;
 
         public AccountController()
         {
@@ -135,6 +138,53 @@ namespace RegistrationApp.Controllers
         }
 
         //
+        // GET: /Account/GenerateVerificationCode
+        public static string GenerateVerificationCode(int length)
+        {
+            Random random = new Random();
+            string chars = "0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        //
+        // POST: /Account/SubmitRegistrationCode
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> SubmitRegistrationCode(EnterRegistrationCodeViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await UserManager.FindByEmailAsync(model.Email);
+                if(user == null)
+                {
+                    ModelState.AddModelError("", "Invalid email address.");
+                    return View(model);
+                }
+                // compare aspnetuser verificationcode to user entered code
+                if(user.VerificationCode == model.VerificationCode)
+                {
+                    user.EmailConfirmed = true;
+                    user.VerificationCode = model.VerificationCode;
+                    await UserManager.UpdateAsync(user);
+                    //redirect to Log In
+                    return RedirectToAction("Login", "Account");
+                }
+                else
+                {
+                    ModelState.AddModelError("", "Invalid code");
+                }
+            }
+            return View("EnterRegistrationCode.cshtml", model);
+        }
+
+        //
         // GET: /Account/Register
         [AllowAnonymous]
         public ActionResult Register()
@@ -149,21 +199,28 @@ namespace RegistrationApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Register(RegisterViewModel model)
         {
+            var dbContext = new UserRegistrationDBEntities();
+
             if (ModelState.IsValid)
             {
                 var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
+                user.VerificationCode = GenerateVerificationCode(6);
                 var result = await UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
+                    // Pair aspnetuser to application user
+                    string UniqueUser = AccountService.RegisterNewAppUser(model);
+                    await UserManager.AddClaimAsync(user.Id, new Claim("Config", UniqueUser));
                     await SignInManager.SignInAsync(user, isPersistent:false, rememberBrowser:false);
-                    
+
                     // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=320771
                     // Send an email with this link
                     // string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
                     // var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
                     // await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
 
-                    return RedirectToAction("Index", "Home");
+                    await UserManager.SendEmailAsync(user.Id, "Registration", "Your one-time registration code is " + user.VerificationCode);
+                    return RedirectToAction("EnterRegistrationCode", "Home", new { email = user.Email });
                 }
                 AddErrors(result);
             }
@@ -443,6 +500,11 @@ namespace RegistrationApp.Controllers
             }
         }
 
+        /// <summary>
+        /// After logging in - navigate user to page
+        /// </summary>
+        /// <param name="returnUrl"></param>
+        /// <returns></returns>
         private ActionResult RedirectToLocal(string returnUrl)
         {
             if (Url.IsLocalUrl(returnUrl))
