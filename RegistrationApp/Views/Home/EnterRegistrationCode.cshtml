@@ -89,6 +89,20 @@
         });
     });
 
+    inputs.addEventListener("keyup", function (e) {
+        const target = e.target;
+        const key = e.key.toLowerCase();
+
+        if (key == "backspace" || key == "delete") {
+            target.value = "";
+            const prev = target.previousElementSibling;
+            if (prev) {
+                prev.focus();
+            }
+            return;
+        }
+    });
+
     const form = document.getElementById('otp-form')
     form.addEventListener('submit', (event) => {
         const otp = getOTPString();
